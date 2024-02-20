@@ -46,10 +46,9 @@ const chart = new Chart(ctx, {
       beforeInit: function(chart) {
         const data = chart.config.data;
 
-        data.datasets.forEach((_, i) => {
+        data.datasets.forEach((dataset) => {
           data.labels.forEach((x: number) => {
             if (!roots.includes(x)) {
-              const dataset = data.datasets[i];
               const y = fn(x);
 
               dataset.data.push(y);
