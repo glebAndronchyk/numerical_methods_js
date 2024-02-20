@@ -1,5 +1,14 @@
 {
   "name": "chmi",
   "version": "1.0.0",
-  "dependencies": {}
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@types/chart.js": "^2.9.41",
+    "chart.js": "^4.4.1",
+    "vite": "^5.1.3"
+  }
 }

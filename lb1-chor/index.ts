@@ -1,9 +1,7 @@
-import { fn, interval, dotsAmount, epsilon, chordFn } from './settings';
+import { fn, dotsAmount, epsilon, chordFn } from './settings';
 import { calculateStep } from "../global_settings";
 
-const result: number[] = [];
-
-const getCalculationsArrays = (a: number, b: number, step: number) => {
+export const getCalculationsArrays = (a: number, b: number, step: number) => {
   const yArr = [fn(a)];
   const xArr = Array.from({length: dotsAmount}).reduce<number[]>((acc, _, index) => {
     if (index === 0) {
@@ -23,15 +21,17 @@ const getCalculationsArrays = (a: number, b: number, step: number) => {
   return {yArr, xArr};
 }
 
-const getClarificationIntervals = (xArr: number[], yArr: number[]) => {
-  return yArr.reduce<[number, number][]>((acc, y, index) => {
+export const getClarificationIntervals = (xArr: number[], yArr: number[]) => {
+  const intermediateRoots: number[] = [];
+
+  const clarificationIntervals = yArr.reduce<[number, number][]>((acc, y, index) => {
     if (yArr[index - 1] * y < 0) {
       // When function changes sign => interval should be clarified by chord method
       const x2 = chordFn(xArr[index - 1], xArr[index]);
 
       // If function result is close enough => one solution found
       if (Math.abs(fn(x2)) <= epsilon) {
-        result.push(x2);
+        intermediateRoots.push(x2);
         return acc;
       }
 
@@ -44,20 +44,37 @@ const getClarificationIntervals = (xArr: number[], yArr: number[]) => {
 
     return acc;
   }, []);
+
+  return {intermediateRoots, clarificationIntervals};
 }
 
-const clarifyRootsByChord = (intervals: [number, number][]) => {
-  intervals.forEach(([a, b]) => {
-    const step = calculateStep([a, b], dotsAmount);
+export const clarifyRootsByChord = (startIntervals: [number, number][]) => {
+  const initialDots: number[][] = [];
+  const roots: number[] = [];
 
-    const {xArr, yArr} = getCalculationsArrays(a, b, step);
+   const clarify = (intervals: typeof startIntervals, level = 0) => {
+     intervals.forEach(([a, b]) => {
+       const step = calculateStep([a, b], dotsAmount);
 
-    const intervalsForClarification = getClarificationIntervals(xArr, yArr);
+       const {xArr, yArr} = getCalculationsArrays(a, b, step);
+       if (level === 0) {
+         initialDots.push(...xArr.map((n, index) => {
+           return [n, yArr[index]];
+         }));
+       }
 
-    // Recursively find other solutions
-    intervalsForClarification.length && clarifyRootsByChord(intervalsForClarification);
-  });
+       const {intermediateRoots, clarificationIntervals} = getClarificationIntervals(xArr, yArr);
+       roots.push(...intermediateRoots);
+
+       // Recursively find other solutions
+       clarificationIntervals.length && clarify(clarificationIntervals, level + 1);
+     });
+   }
+
+   clarify(startIntervals);
+
+    return {initialDots, roots: roots.map(root => +Number(root).toFixed(7))};
 }
 
-clarifyRootsByChord([interval]);
-console.log(result);
+// clarifyRootsByChord([interval]);
+// console.log(result);
