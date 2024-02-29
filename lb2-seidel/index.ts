@@ -1,4 +1,4 @@
-import {A, B, epsilon, FIRST_ITERATION_COEFFICIENTS, INITIAL_MATRIX, MAX_D} from "./settings";
+import {A, B, epsilon, INITIAL_MATRIX, MAX_D, startCoefs} from "./settings";
 import {
   transpose,
   multiply
@@ -76,14 +76,14 @@ const getNormalizedMatrix = () => {
 const clarify = () => {
   const equations = getEquations(INITIAL_MATRIX);
 
-  const firstIteration = iterate(FIRST_ITERATION_COEFFICIENTS, equations);
+  const firstIteration = iterate(startCoefs, equations);
 
   if (!firstIteration) {
     d = 0;
     const normalizedMatrix = getNormalizedMatrix();
     const normalizedEquations = getEquations(normalizedMatrix)
 
-    return iterate(FIRST_ITERATION_COEFFICIENTS, normalizedEquations);
+    return iterate(startCoefs, normalizedEquations);
   }
 
   return firstIteration;
