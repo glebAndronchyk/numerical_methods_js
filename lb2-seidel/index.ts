@@ -1,6 +1,10 @@
-import {epsilon, FIRST_ITERATION_COEFFICIENTS, INITIAL_MATRIX} from "./settings";
+import {A, B, epsilon, FIRST_ITERATION_COEFFICIENTS, INITIAL_MATRIX, MAX_D} from "./settings";
+import {
+  transpose,
+  multiply
+} from 'mathjs'
 
-const getInitialEquations = (matrix: number[][]) => {
+const getEquations = (matrix: number[][]) => {
   return matrix.map((row) => {
     const values = row.slice(0, row.length - 1);
     const b = row.at(-1);
@@ -28,9 +32,9 @@ const getInitialEquations = (matrix: number[][]) => {
   });
 }
 
-const equations = getInitialEquations(INITIAL_MATRIX);
+let d = 0;
 
-const iterate = (coefficients: number[]): number[] => {
+const iterate = (coefficients: number[], equations: ((...args: number[]) => number)[]): number[] | null => {
 
   let accuracyCount = 0;
 
@@ -40,18 +44,49 @@ const iterate = (coefficients: number[]): number[] => {
 
     const result = eq(...coefsCopy)
 
-    if (result <= epsilon) {
+    if (Math.abs(coefficients[index] - result) <= epsilon) {
       accuracyCount++;
+    } else if (coefficients[index] <= result) {
+      d++;
     }
 
     coefficients[index] = result;
   });
 
+  if (d >= MAX_D) {
+    return null;
+  }
+
   if (accuracyCount === equations.length) {
     return coefficients;
   }
 
-  return iterate(coefficients);
+  return iterate(coefficients, equations);
 }
 
-iterate(FIRST_ITERATION_COEFFICIENTS);
+const getNormalizedMatrix = () => {
+  const transposedA = transpose(A);
+
+  const normalizedA = multiply(transposedA, A);
+  const normalizedB = multiply(transposedA, B);
+
+  return normalizedA.map((row, i) => [...row, ...normalizedB[i]]);
+}
+
+const clarify = () => {
+  const equations = getEquations(INITIAL_MATRIX);
+
+  const firstIteration = iterate(FIRST_ITERATION_COEFFICIENTS, equations);
+
+  if (!firstIteration) {
+    d = 0;
+    const normalizedMatrix = getNormalizedMatrix();
+    const normalizedEquations = getEquations(normalizedMatrix)
+
+    return iterate(FIRST_ITERATION_COEFFICIENTS, normalizedEquations);
+  }
+
+  return firstIteration;
+}
+
+console.log(clarify());
