@@ -9,6 +9,7 @@
   "dependencies": {
     "@types/chart.js": "^2.9.41",
     "chart.js": "^4.4.1",
+    "math.js": "^1.1.46",
     "vite": "^5.1.3"
   }
 }
