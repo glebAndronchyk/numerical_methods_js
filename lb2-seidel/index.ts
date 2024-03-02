@@ -1,4 +1,4 @@
-import {A, B, epsilon, INITIAL_MATRIX, MAX_D, startCoefs} from "./settings";
+import {A, B, epsilon, INITIAL_MATRIX, MAX_DISCREPANCY, INITIAL_COEFS, INITIAL_ITERATION_STATE} from "./settings";
 import {
   transpose,
   multiply
@@ -32,9 +32,7 @@ const getEquations = (matrix: number[][]) => {
   });
 }
 
-let d = 0;
-
-const iterate = (coefficients: number[], equations: ((...args: number[]) => number)[]): number[] | null => {
+const iterate = (equations: ((...args: number[]) => number)[], coefficients = INITIAL_COEFS, state = {...INITIAL_ITERATION_STATE}): number[] | null => {
 
   let accuracyCount = 0;
 
@@ -42,18 +40,21 @@ const iterate = (coefficients: number[], equations: ((...args: number[]) => numb
     const coefsCopy =  [...coefficients];
     coefsCopy[index] = null;
 
-    const result = eq(...coefsCopy)
+    const result = eq(...coefsCopy);
+    const absoluteDifference = Math.abs(coefficients[index] - result);
+    const prevAbsoluteDifference = state.prevAbsoluteDifferences[index];
 
-    if (Math.abs(coefficients[index] - result) <= epsilon) {
+    if (absoluteDifference <= epsilon) {
       accuracyCount++;
-    } else if (coefficients[index] <= result) {
-      d++;
+    } else if (prevAbsoluteDifference && prevAbsoluteDifference <= absoluteDifference) {
+      state.totalDiscrepancy++;
     }
 
+    state.prevAbsoluteDifferences[index] = absoluteDifference;
     coefficients[index] = result;
   });
 
-  if (d >= MAX_D) {
+  if (state.totalDiscrepancy >= MAX_DISCREPANCY) {
     return null;
   }
 
@@ -61,7 +62,7 @@ const iterate = (coefficients: number[], equations: ((...args: number[]) => numb
     return coefficients;
   }
 
-  return iterate(coefficients, equations);
+  return iterate(equations, coefficients, state);
 }
 
 const getNormalizedMatrix = () => {
@@ -76,14 +77,13 @@ const getNormalizedMatrix = () => {
 const clarify = () => {
   const equations = getEquations(INITIAL_MATRIX);
 
-  const firstIteration = iterate(startCoefs, equations);
+  const firstIteration = iterate(equations);
 
   if (!firstIteration) {
-    d = 0;
     const normalizedMatrix = getNormalizedMatrix();
     const normalizedEquations = getEquations(normalizedMatrix)
 
-    return iterate(startCoefs, normalizedEquations);
+    return iterate(normalizedEquations);
   }
 
   return firstIteration;
