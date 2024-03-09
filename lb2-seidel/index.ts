@@ -58,4 +58,7 @@ const clarify = () => {
   return firstIteration;
 }
 
-console.log(clarify());
+console.log(clarify().reduce((acc, x, i) => ({
+  ...acc,
+  [`x${i + 1}`]: x,
+}), {}));
