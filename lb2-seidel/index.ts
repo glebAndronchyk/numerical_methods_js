@@ -1,8 +1,8 @@
 import {epsilon, MAX_DISCREPANCY, INITIAL_COEFS, INITIAL_ITERATION_STATE, A, B} from "./settings";
-import {Equation} from "./types";
+import {Equation, Matrix} from "./types";
 import {getEquations, getNormalizedMatrix} from "./helpers";
 
-const iterate = (equations: Equation[], coefficients = INITIAL_COEFS, state = {...INITIAL_ITERATION_STATE}): number[] | null => {
+const iterate = (equations: Equation[], coefficients , state = {...INITIAL_ITERATION_STATE}): number[] | null => {
 
   let accuracyCount = 0;
 
@@ -42,23 +42,24 @@ const iterate = (equations: Equation[], coefficients = INITIAL_COEFS, state = {.
   return iterate(equations, coefficients, state);
 }
 
-const clarify = () => {
-  const equations = getEquations(A, B);
+export const seidelClarify = (mA: Matrix, mB: Matrix) => {
+  const equations = getEquations(mA, mB);
+  const coefficients = Array.from({length: mA[0].length}).fill(1) as number[];
 
-  const firstIteration = iterate(equations);
+  const firstIteration = iterate(equations, coefficients);
 
   if (!firstIteration) {
     // matrix diverged
-    const {normalizedA, normalizedB} = getNormalizedMatrix(A, B);
+    const {normalizedA, normalizedB} = getNormalizedMatrix(mA, mB);
     const normalizedEquations = getEquations(normalizedA, normalizedB)
 
-    return iterate(normalizedEquations);
+    return iterate(normalizedEquations, coefficients);
   }
 
   return firstIteration;
 }
 
-console.log(clarify().reduce((acc, x, i) => ({
+console.log(seidelClarify(A, B).reduce((acc, x, i) => ({
   ...acc,
   [`x${i + 1}`]: x,
 }), {}));
