@@ -25,6 +25,14 @@ class Equation {
     return [0, 0];
   }
 
+  getDerivationDelegates(d = 0.1) {
+    const fn = this.toLeftSide();
+    const dfnx = (x, y) => (fn(x + d, y) - fn(x, y)) / d;
+    const dfny = (x, y) => (fn(x, y + d) - fn(x, y)) / d;
+
+    return [dfnx, dfny];
+  }
+
   getDerivativeByPoint(x, y, d = 0.1) {
     const fn = this.toLeftSide();
     const dfx = (fn(x + d, y) - fn(x, y)) / d;
@@ -42,41 +50,30 @@ class SONE {
     // const [x, y] = this.eq1.intersects(this.eq2);
     const [x, y] = [0.6,-0.4];
 
-    const { x: clarifiedX, y: clarifiedY, jacobian } = this._clarifyStartValues(x, y);
-    // const P0 = [[clarifiedX], [clarifiedY]];
+    const { x: clarifiedX, y: clarifiedY, jacobianDelegates } = this._clarifyStartValues(x, y);
+    const P0 = [[clarifiedX], [clarifiedY]];
 
-    // This should be iteration
-    const B = this._getEquationsResultAtPoint(clarifiedX, clarifiedY);
-
-    // const deltas = seidelClarify(jacobian, B).map((d) => [d]);
-    // return this._newtonsClarify(P0, deltas);
+    return this._newtonsClarify(P0, jacobianDelegates);
   };
 
+  private _newtonsClarify(start, jacobianDelegates) {
+    const x = start[0][0];
+    const y = start[1][0];
 
-  private _newtonsClarify(start: Matrix, deltas: Matrix) {
-    let prev = [...start];
+    const B = this._getEquationsResultAtPoint(x, y);
+    const jacobian = jacobianDelegates.map((row) => row.map((fn) => fn(x, y)));
+    const deltas = seidelClarify(jacobian, B).map((d) => [d]);
+    const current = add(start, deltas);
 
-    let stop = 0;
+    console.log(current);
 
-    while (true) {
-      const current = add(prev, deltas);
-
-      if (stop > 40) {
-        break;
-      }
-
-      // console.log(deltas);
-      // console.log(Math.abs(current[0][0] - prev[0][0]));
-      // console.log({cv: current[0][0], pv: prev[0][0]})
-
-      if (Math.abs(current[0][0] - prev[0][0]) <= epsilon) {
-        return current;
-      }
-
-      stop++;
-      prev = [...current];
+    if (Math.abs(current[0][0] - x) > epsilon) {
+      return this._newtonsClarify(current, jacobianDelegates);
     }
-  };
+
+    return current;
+  }
+
   private _getEquationsResultAtPoint(x, y) {
     return this.equations.map((eq) => ([eq.toLeftSide()(x, y)]));
   }
@@ -91,13 +88,19 @@ class SONE {
       const derivation = this._createDerivativeMatrixByPoint(currX, currY);
 
       if (this._checkIntermediateResult(derivation)) {
-        return {x: currX, y: currY, jacobian: derivation};
+        const jacobianDelegates = this._createJacobianDelegates();
+
+        return {x: currX, y: currY, jacobianDelegates};
       }
 
       currX = processCurrent(currX);
       currY = processCurrent(currY);
     }
   };
+
+  private _createJacobianDelegates() {
+    return this.equations.map((eq) => eq.getDerivationDelegates());
+  }
 
   private _createDerivativeMatrixByPoint = (x, y) => {
     return this.equations.map((eq) => eq.getDerivativeByPoint(x, y));
