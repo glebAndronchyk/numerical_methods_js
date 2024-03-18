@@ -25,10 +25,11 @@ const iterate = (equations: Equation[], coefficients: number[] , state = getIter
     coefficientsCopy[index] = result;
   });
 
-  const currentDifferencesSum = currentAbsoluteDiff.reduce((acc, x) => acc + x, 0);
-  const prevDifferencesSum = state.prevAbsoluteDifferences.reduce((acc, x) => acc + x, 0);
+  const isDifferencesNormal = () => {
+    return currentAbsoluteDiff.every((n, i) => n < state.prevAbsoluteDifferences[i]);
+  }
 
-  if (currentDifferencesSum > prevDifferencesSum) {
+  if (!isDifferencesNormal()) {
     state.totalDiscrepancy++;
   }
 
