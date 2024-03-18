@@ -8,11 +8,11 @@ const iterate = (equations: Equation[], coefficients: number[] , state = {...INI
   const coefficientsCopy = [...coefficients];
 
   equations.forEach((eq, index) => {
-    const coefsCopy =  [...coefficientsCopy];
-    coefsCopy[index] = null; // resets current coef in order to prevent it from taking part in calculations
+    const equationCoefs =  [...coefficientsCopy];
+    equationCoefs[index] = null; // resets current coef in order to prevent it from taking part in calculations
 
     // Current X is being calculated
-    const result = eq(...coefsCopy);
+    const result = eq(...equationCoefs);
     // This is used in comparison with epsilon
     const absoluteDifference = Math.abs(coefficientsCopy[index] - result);
     const prevAbsoluteDifference = state.prevAbsoluteDifferences[index];
@@ -45,16 +45,16 @@ const iterate = (equations: Equation[], coefficients: number[] , state = {...INI
 
 export const seidelClarify = (mA: Matrix, mB: Matrix) => {
   const equations = getEquations(mA, mB);
-  const coefficientsCopy = Array.from({length: mA[0].length}).fill(1) as number[];
+  const coefficients = Array.from({length: mA[0].length}).fill(1) as number[];
 
-  const firstIteration = iterate(equations, coefficientsCopy);
+  const firstIteration = iterate(equations, coefficients);
 
   if (!firstIteration) {
     // matrix diverged
     const {normalizedA, normalizedB} = getNormalizedMatrix(mA, mB);
     const normalizedEquations = getEquations(normalizedA, normalizedB)
 
-    return iterate(normalizedEquations, coefficientsCopy);
+    return iterate(normalizedEquations, coefficients);
   }
 
   return firstIteration;
