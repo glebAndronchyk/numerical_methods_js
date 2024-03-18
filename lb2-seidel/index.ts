@@ -1,10 +1,11 @@
-import {epsilon, MAX_DISCREPANCY, INITIAL_COEFS, INITIAL_ITERATION_STATE, A, B} from "./settings";
+import {epsilon, MAX_DISCREPANCY, A, B, getIterationState} from "./settings";
 import {Equation, Matrix} from "./types";
 import {getEquations, getNormalizedMatrix} from "./helpers";
 
-const iterate = (equations: Equation[], coefficients: number[] , state = {...INITIAL_ITERATION_STATE}): number[] | null => {
+const iterate = (equations: Equation[], coefficients: number[] , state = getIterationState()): number[] | null => {
 
   let accuracyCount = 0;
+  let currentAbsoluteDiff: number[] = [];
   const coefficientsCopy = [...coefficients];
 
   equations.forEach((eq, index) => {
@@ -15,20 +16,21 @@ const iterate = (equations: Equation[], coefficients: number[] , state = {...INI
     const result = eq(...equationCoefs);
     // This is used in comparison with epsilon
     const absoluteDifference = Math.abs(coefficientsCopy[index] - result);
-    const prevAbsoluteDifference = state.prevAbsoluteDifferences[index];
-    const isDifferencesNormal = !prevAbsoluteDifference || (prevAbsoluteDifference > absoluteDifference);
+    currentAbsoluteDiff.push(absoluteDifference);
 
     if (absoluteDifference <= epsilon) {
       accuracyCount++;
-    } else if (!isDifferencesNormal) {
-      // Matrix starts to diverge
-      state.totalDiscrepancy++;
     }
 
-    // remembering current absolute difference
-    state.prevAbsoluteDifferences[index] = absoluteDifference;
     coefficientsCopy[index] = result;
   });
+
+  const currentDifferencesSum = currentAbsoluteDiff.reduce((acc, x) => acc + x, 0);
+  const prevDifferencesSum = state.prevAbsoluteDifferences.reduce((acc, x) => acc + x, 0);
+
+  if (currentDifferencesSum > prevDifferencesSum) {
+    state.totalDiscrepancy++;
+  }
 
   // when matrix diverged => I should normalize it
   if (state.totalDiscrepancy >= MAX_DISCREPANCY) {
@@ -40,6 +42,7 @@ const iterate = (equations: Equation[], coefficients: number[] , state = {...INI
     return coefficientsCopy;
   }
 
+  state.prevAbsoluteDifferences = currentAbsoluteDiff;
   return iterate(equations, coefficientsCopy, state);
 }
 

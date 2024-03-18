@@ -15,11 +15,11 @@ export const {A, B, INITIAL_COEFS} = INITIAL_MATRIX.reduce<MatrixState>((acc, ro
   }
 }, {A: [], B:[], INITIAL_COEFS: []});
 
-export const INITIAL_ITERATION_STATE: IterationState  = {
-  prevAbsoluteDifferences: Array.from<Coefficient>({length: A.length}).fill(null),
-  totalDiscrepancy: 0,
-}
+export const getIterationState = () => ({
+      prevAbsoluteDifferences: Array.from<Coefficient>({length: A.length}).fill(null),
+      totalDiscrepancy: 0,
+    }
+);
 
-export const MAX_DISCREPANCY = 5;
-
+export const MAX_DISCREPANCY = 2;
 export const epsilon = 0.01;
