@@ -5,7 +5,6 @@ export type Equation = (...args: number[]) => number;
 export interface MatrixState {
   A: Matrix;
   B: Matrix;
-  INITIAL_COEFS: number[];
 }
 
 export interface IterationState {
